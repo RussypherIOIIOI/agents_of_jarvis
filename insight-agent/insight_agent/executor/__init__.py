@@ -27,6 +27,18 @@ FORBIDDEN_NAMES = {
     "os", "sys", "subprocess", "socket", "shutil", "pathlib",
 }
 
+# I/O-capable pandas/numpy methods that could read or write files, databases,
+# or network resources. Blocked outright regardless of the receiver object:
+# the DataFrame is injected into the namespace, so generated code has no
+# legitimate reason to perform any file or network I/O.
+FORBIDDEN_IO_CALLS = {
+    "read_csv", "read_excel", "read_json", "read_sql", "read_sql_query",
+    "read_sql_table", "read_parquet", "read_pickle", "read_html",
+    "read_feather", "read_orc", "read_hdf", "read_gbq",
+    "to_csv", "to_excel", "to_json", "to_sql", "to_parquet", "to_pickle",
+    "to_hdf", "to_feather", "to_html",
+}
+
 
 @dataclass
 class ExecResult:
@@ -67,6 +79,15 @@ def validate_code(code: str) -> None:
         if isinstance(node, ast.Name) and node.id in FORBIDDEN_NAMES:
             raise CodeSafetyError(f"disallowed name: {node.id}")
 
+        # Block file/network I/O via pandas/numpy method calls, regardless of
+        # the object they are called on (df.to_csv, pd.read_csv, chained calls).
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in FORBIDDEN_IO_CALLS
+        ):
+            raise CodeSafetyError(f"disallowed I/O call: {node.func.attr}")
+
 
 def _worker(code: str, df_records: list[dict], columns: list[str], q: mp.Queue) -> None:
     """Runs in a separate process so a timeout can hard-kill it."""
@@ -78,8 +99,6 @@ def _worker(code: str, df_records: list[dict], columns: list[str], q: mp.Queue) 
         import pandas as pd
 
         df = pd.DataFrame.from_records(df_records)
-        if columns:
-            df = df[[c for c in columns if c in df.columns]] if False else df
 
         def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
             # Statement was already validated by validate_code(); this simply

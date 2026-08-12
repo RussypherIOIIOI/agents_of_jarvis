@@ -39,3 +39,22 @@ def test_upload_rejects_non_csv():
 def test_ask_unknown_dataset():
     resp = client.post("/ask", json={"dataset_id": "does-not-exist", "question": "hi"})
     assert resp.status_code == 404
+
+
+def test_ask_returns_structured_error_on_llm_failure(monkeypatch):
+    from insight_agent import api as api_module
+
+    csv = b"region,sales\nnorth,100\n"
+    files = {"file": ("sales.csv", io.BytesIO(csv), "text/csv")}
+    up = client.post("/upload", files=files)
+    dataset_id = up.json()["dataset_id"]
+
+    monkeypatch.setattr(
+        api_module,
+        "analyze",
+        lambda q, ds: (_ for _ in ()).throw(RuntimeError("simulated provider outage")),
+    )
+    resp = client.post("/ask", json={"dataset_id": dataset_id, "question": "hi"})
+    assert resp.status_code == 502
+    assert "detail" in resp.json()
+    assert "simulated provider outage" not in resp.text  # no raw exception leakage

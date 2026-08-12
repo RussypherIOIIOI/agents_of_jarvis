@@ -11,6 +11,7 @@ multi-user production, back this with a store and per-session isolation.
 """
 from __future__ import annotations
 
+import logging
 import uuid
 from pathlib import Path
 
@@ -21,6 +22,8 @@ from pydantic import BaseModel
 
 from .agent import analyze
 from .data import Dataset, load_csv_bytes
+
+logger = logging.getLogger("insight_agent.api")
 
 app = FastAPI(title="Insight Agent", version="1.0.0")
 
@@ -67,7 +70,17 @@ def ask(req: AskRequest) -> dict:
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="question is empty")
 
-    result = analyze(req.question, dataset)
+    try:
+        result = analyze(req.question, dataset)
+    except Exception:
+        # Log the full exception server-side; surface a structured error to the
+        # caller without leaking stack traces, keys, or internal paths.
+        logger.exception("analysis failed for dataset_id=%s", req.dataset_id)
+        raise HTTPException(
+            status_code=502,
+            detail="analysis failed: the upstream LLM provider returned an error "
+            "or was unreachable; please retry",
+        ) from None
     return {
         "answer": result.answer,
         "code": result.code,
