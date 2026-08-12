@@ -11,21 +11,34 @@ multi-user production, back this with a store and per-session isolation.
 """
 from __future__ import annotations
 
-import logging
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .agent import analyze
 from .data import Dataset, load_csv_bytes
+from .tracing import TRACE_HEADER, get_logger, new_trace_id, trace_id_var
 
-logger = logging.getLogger("insight_agent.api")
+logger = get_logger("insight_agent.api")
 
 app = FastAPI(title="Insight Agent", version="1.0.0")
+
+
+@app.middleware("http")
+async def trace_middleware(request: Request, call_next):
+    """Thread an upstream trace id (or a fresh one) through the request."""
+    trace_id = request.headers.get(TRACE_HEADER) or new_trace_id()
+    token = trace_id_var.set(trace_id)
+    try:
+        response = await call_next(request)
+    finally:
+        trace_id_var.reset(token)
+    response.headers[TRACE_HEADER] = trace_id
+    return response
 
 _DATASETS: dict[str, Dataset] = {}
 _FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
@@ -88,6 +101,7 @@ def ask(req: AskRequest) -> dict:
         "raw_output": result.raw_output,
         "error": result.error,
         "steps": result.steps,
+        "trace_id": trace_id_var.get(),
     }
 
 

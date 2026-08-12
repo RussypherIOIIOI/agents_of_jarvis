@@ -41,6 +41,33 @@ def test_ask_unknown_dataset():
     assert resp.status_code == 404
 
 
+def test_ask_response_includes_trace_id():
+    csv = b"region,sales\nnorth,100\n"
+    files = {"file": ("sales.csv", io.BytesIO(csv), "text/csv")}
+    up = client.post("/upload", files=files)
+    dataset_id = up.json()["dataset_id"]
+
+    resp = client.post("/ask", json={"dataset_id": dataset_id, "question": "Describe it."})
+    assert resp.status_code == 200
+    assert resp.json()["trace_id"]
+
+
+def test_supplied_trace_id_is_echoed_back_unchanged():
+    csv = b"region,sales\nnorth,100\n"
+    files = {"file": ("sales.csv", io.BytesIO(csv), "text/csv")}
+    up = client.post("/upload", files=files)
+    dataset_id = up.json()["dataset_id"]
+
+    resp = client.post(
+        "/ask",
+        json={"dataset_id": dataset_id, "question": "Describe it."},
+        headers={"X-Trace-Id": "upstream-jarvis-trace-42"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["trace_id"] == "upstream-jarvis-trace-42"
+    assert resp.headers["X-Trace-Id"] == "upstream-jarvis-trace-42"
+
+
 def test_ask_returns_structured_error_on_llm_failure(monkeypatch):
     from insight_agent import api as api_module
 
