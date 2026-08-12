@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insight Agent - Conversational Data Analyst</title>
+  <link rel="stylesheet" href="/static/style.css" />
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Insight Agent</div>
+    <div class="tagline">Ask your data anything</div>
+  </header>
+
+  <main class="layout">
+    <section class="sidebar">
+      <h2>1. Load data</h2>
+      <label class="upload">
+        <input type="file" id="fileInput" accept=".csv" />
+        <span>Choose a CSV file</span>
+      </label>
+      <div id="datasetInfo" class="dataset-info hidden"></div>
+
+      <h2>2. Try a question</h2>
+      <ul class="samples" id="sampleQuestions">
+        <li>What were total sales by region?</li>
+        <li>Plot monthly revenue over time.</li>
+        <li>Which category has the highest average order value?</li>
+        <li>Is there a correlation between spend and signups?</li>
+      </ul>
+    </section>
+
+    <section class="chat">
+      <div id="messages" class="messages">
+        <div class="msg system">
+          Upload a CSV to begin, then ask a question in plain English.
+        </div>
+      </div>
+
+      <form id="askForm" class="composer">
+        <input
+          type="text"
+          id="questionInput"
+          placeholder="Ask a question about your data..."
+          autocomplete="off"
+          disabled
+        />
+        <button type="submit" id="askButton" disabled>Ask</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Insight Agent - open source under the MIT license. Model: configurable (Claude or local Ollama).
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
