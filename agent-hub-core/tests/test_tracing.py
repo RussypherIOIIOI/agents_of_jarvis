@@ -5,7 +5,7 @@ import io
 import json
 import logging
 
-from insight_agent.tracing import JsonFormatter, get_logger, new_trace_id, trace_id_var
+from agent_hub_core.tracing import JsonFormatter, get_logger, new_trace_id, trace_id_var
 
 
 def _capture(logger: logging.Logger) -> io.StringIO:

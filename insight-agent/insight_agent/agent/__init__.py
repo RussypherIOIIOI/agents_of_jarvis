@@ -12,10 +12,11 @@ import re
 import time
 from dataclasses import dataclass, field
 
+from agent_hub_core.executor import ExecResult, run_code
+from agent_hub_core.llm import BaseLLM, get_client
+from agent_hub_core.tracing import get_logger
+
 from ..data import Dataset
-from ..executor import ExecResult, run_code
-from ..llm import BaseLLM, get_client
-from ..tracing import get_logger
 
 logger = get_logger("insight_agent.agent")
 

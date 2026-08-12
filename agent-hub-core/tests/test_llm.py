@@ -1,7 +1,7 @@
 """Tests for the LLM configuration layer."""
 from __future__ import annotations
 
-from insight_agent.llm import LLMConfig
+from agent_hub_core.llm import LLMConfig
 
 
 def test_llm_config_reads_env_at_instantiation_not_import(monkeypatch):

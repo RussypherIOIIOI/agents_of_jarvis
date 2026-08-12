@@ -9,6 +9,10 @@ authors = [{ name = "Your Name" }]
 keywords = ["ai-agent", "data-analysis", "llm", "fastapi", "pandas"]
 
 dependencies = [
+    # Shared hardened core (sandboxed executor, LLM client, tracing).
+    # Local package: install with `pip install -e ../agent-hub-core` during
+    # development; CI installs it from the sibling directory.
+    "agent-hub-core",
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",
     "pandas>=2.0",

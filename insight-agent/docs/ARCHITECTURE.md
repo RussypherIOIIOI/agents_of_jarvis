@@ -31,7 +31,10 @@ the graph abstraction; the default path is dependency-light for clarity and test
 
 ## The executor (safety-critical)
 
-`insight_agent/executor/__init__.py` never trusts model output.
+The executor lives in the shared `agent-hub-core` package
+(`agent_hub_core/executor/__init__.py`), together with the LLM layer and tracing,
+so every JARVIS agent depends on one hardened implementation rather than a copy.
+It never trusts model output.
 
 - **Static validation (`validate_code`).** The code is parsed to an AST and rejected
   if it imports anything outside an allow-list, accesses dunder attributes, or uses
@@ -50,8 +53,8 @@ microVM and add resource limits (CPU, memory, no network).
 
 ## Model layer
 
-`insight_agent/llm/__init__.py` abstracts the provider behind a single `complete`
-method:
+`agent_hub_core/llm/__init__.py` (shared package, same reasoning as the executor)
+abstracts the provider behind a single `complete` method:
 
 - **Anthropic (Claude)** for high-quality reasoning when an API key is present.
 - **Ollama** for a free, offline, local model.

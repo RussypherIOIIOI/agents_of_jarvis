@@ -4,7 +4,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from insight_agent.executor import CodeSafetyError, run_code, validate_code
+from agent_hub_core.executor import CodeSafetyError, run_code, validate_code
 
 
 @pytest.fixture

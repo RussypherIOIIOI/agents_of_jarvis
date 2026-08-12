@@ -143,10 +143,12 @@ Then upload the bundled sample dataset at [`sample_data/sales.csv`](sample_data/
 insight-agent/
 ├── insight_agent/
 │   ├── agent/            # LangGraph state machine (plan/code/execute/explain)
-│   ├── executor/         # Sandboxed code runner (allow-list + timeout)
-│   ├── llm/              # Claude + Ollama client layer
 │   ├── data/             # CSV / SQLite loading
 │   └── api.py            # FastAPI app
+
+The sandboxed executor, LLM client layer, and structured tracing live in the
+sibling `agent-hub-core` package: one hardened source of truth shared by all
+JARVIS agents instead of per-agent copies.
 ├── frontend/             # Web UI (HTML/CSS/JS)
 ├── tests/                # pytest suite
 ├── sample_data/          # sales.csv for a quick try

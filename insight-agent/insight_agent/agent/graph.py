@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from agent_hub_core.executor import run_code
+from agent_hub_core.llm import get_client
+
 from ..data import Dataset
-from ..executor import run_code
-from ..llm import get_client
 from . import CODE_SYSTEM, EXPLAIN_SYSTEM, _extract_code
 
 

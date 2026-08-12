@@ -14,6 +14,7 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
+from agent_hub_core.tracing import TRACE_HEADER, get_logger, new_trace_id, trace_id_var
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -21,7 +22,6 @@ from pydantic import BaseModel
 
 from .agent import analyze
 from .data import Dataset, load_csv_bytes
-from .tracing import TRACE_HEADER, get_logger, new_trace_id, trace_id_var
 
 logger = get_logger("insight_agent.api")
 

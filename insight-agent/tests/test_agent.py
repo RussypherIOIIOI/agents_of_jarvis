@@ -1,9 +1,10 @@
 """End-to-end agent test using the offline EchoLLM stub (no API key/network)."""
 from __future__ import annotations
 
+from agent_hub_core.llm import EchoLLM, LLMConfig
+
 from insight_agent.agent import analyze
 from insight_agent.data import load_csv_bytes
-from insight_agent.llm import EchoLLM, LLMConfig
 
 
 def test_analyze_runs_end_to_end_offline():
