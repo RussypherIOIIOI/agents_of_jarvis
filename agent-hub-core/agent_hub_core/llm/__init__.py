@@ -7,15 +7,19 @@ Ollama models, so the project runs with an API key OR fully offline and free.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class LLMConfig:
-    provider: str = os.environ.get("LLM_PROVIDER", "anthropic")
-    model: str = os.environ.get("LLM_MODEL", "claude-sonnet-4-5")
-    temperature: float = float(os.environ.get("LLM_TEMPERATURE", "0.1"))
-    max_tokens: int = int(os.environ.get("LLM_MAX_TOKENS", "2048"))
+    # default_factory so the environment is re-read at each instantiation,
+    # not once at module import (dotenv/test fixtures may set env late).
+    provider: str = field(default_factory=lambda: os.environ.get("LLM_PROVIDER", "anthropic"))
+    model: str = field(default_factory=lambda: os.environ.get("LLM_MODEL", "claude-sonnet-5"))
+    temperature: float = field(
+        default_factory=lambda: float(os.environ.get("LLM_TEMPERATURE", "0.1"))
+    )
+    max_tokens: int = field(default_factory=lambda: int(os.environ.get("LLM_MAX_TOKENS", "2048")))
 
 
 class BaseLLM:

@@ -34,9 +34,7 @@ No manual scripting. No copy-pasting into a notebook. Just a conversation with y
 
 ![Insight Agent demo](docs/demo.gif)
 
-**Live demo (UI):** https://01q2t.app.super.myninja.ai
-
-> Note: the hosted demo runs with an offline stub model so anyone can click through the interface without an API key. For real analysis, run locally with your Claude key or a local Ollama model (see Quickstart). The demo URL is temporary; after you push to GitHub, deploy your own and replace this link.
+**Live demo (UI):** deploy your own instance and add the link here (see Quickstart).
 
 ---
 
@@ -145,10 +143,12 @@ Then upload the bundled sample dataset at [`sample_data/sales.csv`](sample_data/
 insight-agent/
 ├── insight_agent/
 │   ├── agent/            # LangGraph state machine (plan/code/execute/explain)
-│   ├── executor/         # Sandboxed code runner (allow-list + timeout)
-│   ├── llm/              # Claude + Ollama client layer
 │   ├── data/             # CSV / SQLite loading
 │   └── api.py            # FastAPI app
+
+The sandboxed executor, LLM client layer, and structured tracing live in the
+sibling `agent-hub-core` package: one hardened source of truth shared by all
+JARVIS agents instead of per-agent copies.
 ├── frontend/             # Web UI (HTML/CSS/JS)
 ├── tests/                # pytest suite
 ├── sample_data/          # sales.csv for a quick try

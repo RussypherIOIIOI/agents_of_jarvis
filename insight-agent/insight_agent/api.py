@@ -14,7 +14,8 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from agent_hub_core.tracing import TRACE_HEADER, get_logger, new_trace_id, trace_id_var
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -22,7 +23,22 @@ from pydantic import BaseModel
 from .agent import analyze
 from .data import Dataset, load_csv_bytes
 
+logger = get_logger("insight_agent.api")
+
 app = FastAPI(title="Insight Agent", version="1.0.0")
+
+
+@app.middleware("http")
+async def trace_middleware(request: Request, call_next):
+    """Thread an upstream trace id (or a fresh one) through the request."""
+    trace_id = request.headers.get(TRACE_HEADER) or new_trace_id()
+    token = trace_id_var.set(trace_id)
+    try:
+        response = await call_next(request)
+    finally:
+        trace_id_var.reset(token)
+    response.headers[TRACE_HEADER] = trace_id
+    return response
 
 _DATASETS: dict[str, Dataset] = {}
 _FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
@@ -67,7 +83,17 @@ def ask(req: AskRequest) -> dict:
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="question is empty")
 
-    result = analyze(req.question, dataset)
+    try:
+        result = analyze(req.question, dataset)
+    except Exception:
+        # Log the full exception server-side; surface a structured error to the
+        # caller without leaking stack traces, keys, or internal paths.
+        logger.exception("analysis failed for dataset_id=%s", req.dataset_id)
+        raise HTTPException(
+            status_code=502,
+            detail="analysis failed: the upstream LLM provider returned an error "
+            "or was unreachable; please retry",
+        ) from None
     return {
         "answer": result.answer,
         "code": result.code,
@@ -75,6 +101,7 @@ def ask(req: AskRequest) -> dict:
         "raw_output": result.raw_output,
         "error": result.error,
         "steps": result.steps,
+        "trace_id": trace_id_var.get(),
     }
 
 

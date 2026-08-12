@@ -4,7 +4,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from insight_agent.executor import CodeSafetyError, run_code, validate_code
+from agent_hub_core.executor import CodeSafetyError, run_code, validate_code
 
 
 @pytest.fixture
@@ -34,6 +34,27 @@ def test_validate_code_blocks_eval():
 def test_validate_code_blocks_open():
     with pytest.raises(CodeSafetyError):
         validate_code("f = open('/etc/passwd')\nresult = f.read()")
+
+
+def test_validate_code_blocks_read_csv():
+    with pytest.raises(CodeSafetyError):
+        validate_code("result = __import__('pandas').read_csv('/etc/passwd')")
+
+
+def test_validate_code_blocks_to_csv_exfil():
+    with pytest.raises(CodeSafetyError):
+        validate_code("df.to_csv('/tmp/exfil.csv')\nresult = 'done'")
+
+
+def test_validate_code_blocks_read_sql():
+    with pytest.raises(CodeSafetyError):
+        validate_code("result = pd.read_sql('select 1', 'sqlite:///x.db')")
+
+
+def test_validate_code_still_allows_safe_pandas_after_io_lockdown(df):
+    # regression: legitimate analysis must still pass
+    result = run_code("result = df.groupby('a').sum()", df)
+    assert result.ok is True
 
 
 def test_run_code_executes_valid_analysis(df):
