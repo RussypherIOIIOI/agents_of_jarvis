@@ -44,6 +44,21 @@ def test_extra_fields_appear_in_structured_output():
     assert record["trace_id"] == "test-trace-456"
 
 
+def test_trace_id_is_null_when_context_unset():
+    token = trace_id_var.set(None)
+    try:
+        logger = get_logger("test.tracing.unset")
+        stream = _capture(logger)
+
+        logger.info("no trace context")
+
+        record = json.loads(stream.getvalue().strip())
+        assert "trace_id" in record
+        assert record["trace_id"] is None
+    finally:
+        trace_id_var.reset(token)
+
+
 def test_new_trace_id_is_unique_and_nonempty():
     a, b = new_trace_id(), new_trace_id()
     assert a and b and a != b

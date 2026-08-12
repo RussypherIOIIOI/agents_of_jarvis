@@ -103,6 +103,7 @@ def analyze(
         if exec_result.ok:
             break
         last_error = exec_result.error
+        stage_start = time.perf_counter()
         _log_stage(steps, f"error: {last_error}", "error",
                    attempt + 1, (time.perf_counter() - stage_start) * 1000,
                    error=last_error)
@@ -121,7 +122,7 @@ def analyze(
         EXPLAIN_SYSTEM,
         f"QUESTION: {question}\n\nCODE:\n{code}\n\nOUTPUT:\n{output_blob}",
     )
-    _log_stage(steps, "explain", "explain", 1,
+    _log_stage(steps, "explain", "explain", attempt + 1,
                (time.perf_counter() - stage_start) * 1000)
 
     return AgentResult(

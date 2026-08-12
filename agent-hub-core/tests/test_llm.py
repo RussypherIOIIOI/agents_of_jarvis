@@ -11,6 +11,13 @@ def test_llm_config_reads_env_at_instantiation_not_import(monkeypatch):
     assert cfg.provider == "ollama"
     assert cfg.model == "llama3.1"
 
+    # Env changes after the first instantiation must be honored by the next one.
+    monkeypatch.setenv("LLM_PROVIDER", "echo")
+    monkeypatch.setenv("LLM_MODEL", "stub-model")
+    cfg_late = LLMConfig()
+    assert cfg_late.provider == "echo"
+    assert cfg_late.model == "stub-model"
+
 
 def test_llm_config_defaults_when_env_unset(monkeypatch):
     monkeypatch.delenv("LLM_PROVIDER", raising=False)

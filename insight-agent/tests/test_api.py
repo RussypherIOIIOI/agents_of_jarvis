@@ -49,7 +49,9 @@ def test_ask_response_includes_trace_id():
 
     resp = client.post("/ask", json={"dataset_id": dataset_id, "question": "Describe it."})
     assert resp.status_code == 200
-    assert resp.json()["trace_id"]
+    body_trace_id = resp.json()["trace_id"]
+    assert body_trace_id
+    assert resp.headers["X-Trace-Id"] == body_trace_id
 
 
 def test_supplied_trace_id_is_echoed_back_unchanged():
