@@ -60,7 +60,7 @@ function Test-ServiceRunning {
         return @{ ok = $false; detail = "service '$ServiceName' not found" }
     }
     if ($svc.Status -eq 'Running') {
-        return @{ ok = $true; detail = "service is running (PID $($svc.ServiceHandle))" }
+        return @{ ok = $true; detail = "service is running" }
     }
     return @{ ok = $false; detail = "service status: $($svc.Status)" }
 }
@@ -69,6 +69,7 @@ function Test-Heartbeat {
     if (-not (Test-Path $HeartbeatFile)) {
         return @{ ok = $false; detail = "heartbeat file not found at $HeartbeatFile" }
     }
+    $raw = $null
     try {
         $raw = (Get-Content $HeartbeatFile -Raw).Trim()
         $lastBeat = [DateTimeOffset]::Parse($raw)
@@ -78,6 +79,9 @@ function Test-Heartbeat {
         }
         return @{ ok = $false; detail = "heartbeat stale (${age}s old, threshold ${HeartbeatMaxAgeSec}s)" }
     } catch {
+        if ($null -eq $raw) {
+            return @{ ok = $false; detail = "failed to read heartbeat file" }
+        }
         return @{ ok = $false; detail = "unparseable heartbeat: $raw" }
     }
 }
@@ -115,11 +119,12 @@ function Test-DigestDelivery {
         try {
             $lastDigest = [DateTimeOffset]::Parse($lastLine)
             $age = ([DateTimeOffset]::UtcNow - $lastDigest).TotalSeconds
-            if ($age -lt (25 * 3600)) {
+            $maxAgeHours = [math]::Round($DigestMaxAgeSec / 3600)
+            if ($age -lt $DigestMaxAgeSec) {
                 $hoursAgo = [int]($age / 3600)
                 return @{ ok = $true; detail = "digest delivered ${hoursAgo}h ago" }
             } else {
-                return @{ ok = $false; detail = "no successful digest in last 25h (age: $($age)s)" }
+                return @{ ok = $false; detail = "no successful digest in last ${maxAgeHours}h (age: $($age)s)" }
             }
         } catch {
             return @{ ok = $false; detail = "unparseable digest timestamp: $lastLine" }
